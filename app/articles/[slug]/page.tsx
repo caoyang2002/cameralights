@@ -1,34 +1,22 @@
+// app/articles/[slug]/page.tsx
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Card } from "@/components/ui/card";
 import { formatDistanceToNow } from 'date-fns';
+import { getAllArticleSlugs, getArticleBySlug } from '@/lib/articles';
+import { Markdown } from '@/components/markdown'; 
 
-// This would typically come from a CMS or API
-const articles = {
-  'mastering-natural-light-photography': {
-    title: 'Mastering Natural Light Photography',
-    content: `
-      Natural light is one of the most powerful tools in a photographer's arsenal. When used correctly,
-      it can create stunning images that capture the true essence of your subject. In this comprehensive
-      guide, we'll explore various techniques for working with natural light in different conditions.
+// 生成静态路径参数
+export function generateStaticParams() {
+  const slugs = getAllArticleSlugs();
+  return slugs.map((slug) => ({
+    slug: slug,
+  }));
+}
 
-      Key topics we'll cover:
-      - Understanding the quality of light at different times of day
-      - How to use reflectors and diffusers effectively
-      - Working with backlighting and rim lighting
-      - Managing harsh midday sun
-      - Creating mood with window light
-    `,
-    author: 'Sarah Johnson',
-    date: new Date('2024-03-15'),
-    image: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&q=80',
-    category: 'Technique',
-  },
-  // Add other articles here
-};
-
+// 生成元数据
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const article = articles[params.slug as keyof typeof articles];
+  const article = getArticleBySlug(params.slug);
   
   if (!article) {
     return {
@@ -48,8 +36,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
+// 文章页面组件
 export default function ArticlePage({ params }: { params: { slug: string } }) {
-  const article = articles[params.slug as keyof typeof articles];
+  const article = getArticleBySlug(params.slug);
 
   if (!article) {
     notFound();
@@ -78,11 +67,9 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
               <span className="mr-4">By {article.author}</span>
               <span>{formatDistanceToNow(article.date, { addSuffix: true })}</span>
             </div>
-
+            
             <div className="prose prose-neutral dark:prose-invert max-w-none">
-              {article.content.split('\n\n').map((paragraph, index) => (
-                <p key={index} className="mb-4">{paragraph}</p>
-              ))}
+              <Markdown content={article.content} />
             </div>
           </div>
         </Card>
